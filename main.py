@@ -32,9 +32,21 @@ while running:
     for i in range(6):
         asteroid_positions[i] += asteroid_velocities[i]
 
+        if asteroid_positions[i].x < 0:
+            asteroid_positions[i].x = 800
+        if asteroid_positions[i].x > 800:
+            asteroid_positions[i].x = 0
+        if asteroid_positions[i].y < 0:
+            asteroid_positions[i].y = 600
+        if asteroid_positions[i].y > 600:
+            asteroid_positions[i].y = 0
+
+        pygame.draw.circle(screen, (180, 180, 180), (int(asteroid_positions[i].x), int(asteroid_positions[i].y)), asteroid_radii[i])
+        score += 1
+
     pygame.display.flip()
     print(f"Score: {score}")
-    clock.tick(10)
+    clock.tick(60)
 
 pygame.quit()
 sys.exit()
