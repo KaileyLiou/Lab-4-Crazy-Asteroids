@@ -58,7 +58,16 @@ while running:
         for j in range(i + 1, 6):
             normal = check_collision(i, j)
             if normal is not None:
-                print("Collision normal:", normal)
+                relative_velocity = asteroid_velocities[j] - asteroid_velocities[i]
+                speed_toward_each_other = relative_velocity.dot(normal)
+
+                if speed_toward_each_other < 0: # negative means moving toward each other
+                    mass_i = asteroid_radii[i] * asteroid_radii[i] # give larger asteroids more mass
+                    mass_j = asteroid_radii[j] * asteroid_radii[j]
+
+                    impulse = (-2 * speed_toward_each_other) / (1 / mass_i + 1 / mass_j) # calc impulse for collisions
+                    asteroid_velocities[i] -= (impulse / mass_i) * normal
+                    asteroid_velocities[j] += (impulse / mass_j) * normal
 
     pygame.display.flip()
     clock.tick(60)
