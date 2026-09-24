@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import math
 
 pygame.init()
 
@@ -14,11 +15,23 @@ class Missile:
     def __init__(self, position, velocity):
         self.position = position
         self.velocity = velocity
-        self.radius = 4
+        self.radius = 6
+
+class Ship:
+    def __init__(self, position):
+        self.position = position
+        self.angle = 90 # starts facing up
+        self.rotation_speed = 3
+        self.speed = 4
+
+    def forward_vector(self):
+        radians = math.radians(self.angle)
+        return pygame.Vector2(math.cos(radians), -math.sin(radians))
 
 MISSILE_SPEED = 7
+WIDTH, HEIGHT = 800, 600
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Lab 4: Crazy Asteroids")
 
 clock = pygame.time.Clock()
@@ -29,8 +42,8 @@ missiles = []
 
 for i in range(6):
     position = pygame.Vector2(
-        random.randint(0, 800),
-        random.randint(0, 600)
+        random.randint(0, WIDTH),
+        random.randint(0, HEIGHT)
     )
     velocity = pygame.Vector2(
         random.uniform(-3, 3),
@@ -52,10 +65,7 @@ def check_collision(a, b):
         return normal
     return None
 
-def spawn_ship_position():
-    return pygame.Vector2(400, 300)
-
-ship_position = spawn_ship_position()
+ship = Ship(pygame.Vector2(WIDTH/2, HEIGHT/2))
 
 while running:
     for event in pygame.event.get():
@@ -64,30 +74,63 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             target = pygame.Vector2(event.pos)
-
-            direction = target - ship_position
+            direction = target - ship.position
             if direction.length() != 0:
                 direction = direction.normalize()
-
                 missile_velocity = direction * MISSILE_SPEED
-                missiles.append(Missile(pygame.Vector2(ship_position), missile_velocity))
+                missiles.append(Missile(pygame.Vector2(ship.position), missile_velocity))
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                forward = ship.forward_vector()
+                missile_velocity = forward * MISSILE_SPEED
+                missiles.append(Missile(pygame.Vector2(ship.position), missile_velocity))
+
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_LEFT]:
+        ship.angle += ship.rotation_speed
+    if keys[pygame.K_RIGHT]:
+        ship.angle -= ship.rotation_speed
+
+    forward = ship.forward_vector()
+
+    if keys[pygame.K_UP]:
+        ship.position += forward * ship.speed
+
+    # screen wrapping for the ship
+    if ship.position.x > WIDTH:
+        ship.position.x = 0
+    if ship.position.x < 0:
+        ship.position.x = WIDTH
+    if ship.position.y > HEIGHT:
+        ship.position.y = 0
+    if ship.position.y < 0:
+        ship.position.y = HEIGHT
 
     screen.fill((0, 0, 0))
 
-    pygame.draw.circle(screen, (0, 200, 255), (int(ship_position.x), int(ship_position.y)), 8)
+    left = forward.rotate(140)
+    right = forward.rotate(-140)
+
+    p1 = ship.position + forward * 22
+    p2 = ship.position + left * 16
+    p3 = ship.position + right * 16
+
+    pygame.draw.polygon(screen, (255, 255, 255), [p1, p2, p3], 2)
 
     for asteroid in asteroids:
         asteroid.position += asteroid.velocity
 
         # for screen wrapping if asteroid goes off screen
         if asteroid.position.x < -asteroid.radius:
-            asteroid.position.x = 800 + asteroid.radius
-        elif asteroid.position.x > 800 + asteroid.radius:
+            asteroid.position.x = WIDTH + asteroid.radius
+        elif asteroid.position.x > WIDTH + asteroid.radius:
             asteroid.position.x = -asteroid.radius
 
         if asteroid.position.y < -asteroid.radius:
-            asteroid.position.y = 600 + asteroid.radius
-        elif asteroid.position.y > 600 + asteroid.radius:
+            asteroid.position.y = HEIGHT + asteroid.radius
+        elif asteroid.position.y > HEIGHT + asteroid.radius:
             asteroid.position.y = -asteroid.radius
 
         pygame.draw.circle(screen, (180, 180, 180), (int(asteroid.position.x), int(asteroid.position.y)), asteroid.radius)
@@ -96,8 +139,8 @@ while running:
         missile.position += missile.velocity
 
         # remove missiles that fly off screen
-        if (missile.position.x < 0 or missile.position.x > 800 or
-                missile.position.y < 0 or missile.position.y > 600):
+        if (missile.position.x < 0 or missile.position.x > WIDTH or
+                missile.position.y < 0 or missile.position.y > HEIGHT):
             missiles.remove(missile)
             continue
 
@@ -108,8 +151,8 @@ while running:
             distance = missile.position.distance_to(asteroid.position)
             if distance < missile.radius + asteroid.radius:
                 asteroid.position = pygame.Vector2(
-                    random.randint(0, 800),
-                    random.randint(0, 600)
+                    random.randint(0, WIDTH),
+                    random.randint(0, HEIGHT)
                 )
                 asteroid.velocity = pygame.Vector2(
                     random.uniform(-3, 3),
@@ -132,7 +175,7 @@ while running:
                     mass_i = a.radius * a.radius # give larger asteroids more mass
                     mass_j = b.radius * b.radius
 
-                    impulse = (-2 * speed_toward_each_other) / (1 / mass_i + 1 / mass_j) # calc impulse for collisions
+                    impulse = (-2 * speed_toward_each_other) / (1 / mass_i + 1 / mass_j)
                     a.velocity -= (impulse / mass_i) * normal
                     b.velocity += (impulse / mass_j) * normal
 
