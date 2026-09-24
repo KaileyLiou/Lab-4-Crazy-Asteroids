@@ -6,14 +6,14 @@ This project displays six asteroids moving across the screen, along with a playe
 
 ## Features
 
-- Six moving asteroids with random sizes, positions, and velocities
-- Screen wrapping for asteroids and the ship
-- Asteroid-to-asteroid collision detection using collision normals and mass-based velocity changes
-Rotating, thrust-based spaceship controlled with the keyboard
-Missile targeting using vector normalization, fired at the mouse cursor or in the ship's facing direction
-Missile-to-asteroid collision detection
+- Six asteroids moving with random sizes, positions, and velocities
+- Screen wrapping for the asteroids and the ship
+- Asteroid-to-asteroid collisions
+- A rotating spaceship you can move around with the keyboard
+- Missiles that can be aimed at the mouse or fired straight ahead to destroy asteroids
 
-<img width="788" height="589" alt="Screenshot 2026-09-21 at 10 54 43 AM" src="https://github.com/user-attachments/assets/1075dfa3-3f87-484c-99b7-8aa68bb1a447" />
+## How to Play
+
+Use the left and right arrow keys to rotate the ship, the up arrow to move forward, and the space bar to fire a missle.
 
 <img width="1171" height="877" alt="Screenshot 2026-09-24 at 1 23 43 AM" src="https://github.com/user-attachments/assets/1e20ee78-ad40-46d0-9833-ff10fffccc1d" />
-
