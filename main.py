@@ -10,6 +10,14 @@ class Asteroid:
         self.velocity = velocity
         self.radius = radius
 
+class Missile:
+    def __init__(self, position, velocity):
+        self.position = position
+        self.velocity = velocity
+        self.radius = 4
+
+MISSILE_SPEED = 7
+
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Lab 4: Crazy Asteroids")
 
@@ -17,6 +25,7 @@ clock = pygame.time.Clock()
 running = True
 
 asteroids = []
+missiles = []
 
 for i in range(6):
     position = pygame.Vector2(
@@ -43,12 +52,30 @@ def check_collision(a, b):
         return normal
     return None
 
+def spawn_ship_position():
+    return pygame.Vector2(400, 300)
+
+ship_position = spawn_ship_position()
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            target = pygame.Vector2(event.pos)
+
+            direction = target - ship_position
+            if direction.length() != 0:
+                direction = direction.normalize()
+
+                missile_velocity = direction * MISSILE_SPEED
+                missiles.append(Missile(pygame.Vector2(ship_position), missile_velocity))
+
     screen.fill((0, 0, 0))
+
+    pygame.draw.circle(screen, (0, 200, 255), (int(ship_position.x), int(ship_position.y)), 8)
+
     for asteroid in asteroids:
         asteroid.position += asteroid.velocity
 
@@ -64,6 +91,33 @@ while running:
             asteroid.position.y = -asteroid.radius
 
         pygame.draw.circle(screen, (180, 180, 180), (int(asteroid.position.x), int(asteroid.position.y)), asteroid.radius)
+
+    for missile in missiles[:]:
+        missile.position += missile.velocity
+
+        # remove missiles that fly off screen
+        if (missile.position.x < 0 or missile.position.x > 800 or
+                missile.position.y < 0 or missile.position.y > 600):
+            missiles.remove(missile)
+            continue
+
+        pygame.draw.circle(screen, (255, 255, 0), (int(missile.position.x), int(missile.position.y)), missile.radius)
+
+    for missile in missiles[:]:
+        for asteroid in asteroids[:]:
+            distance = missile.position.distance_to(asteroid.position)
+            if distance < missile.radius + asteroid.radius:
+                asteroid.position = pygame.Vector2(
+                    random.randint(0, 800),
+                    random.randint(0, 600)
+                )
+                asteroid.velocity = pygame.Vector2(
+                    random.uniform(-3, 3),
+                    random.uniform(-3, 3)
+                )
+                if missile in missiles:
+                    missiles.remove(missile)
+                break
 
     for i in range(len(asteroids)):
         for j in range(i + 1, len(asteroids)):
