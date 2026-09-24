@@ -4,28 +4,38 @@ import sys
 
 pygame.init()
 
+class Asteroid:
+    def __init__(self, position, velocity, radius):
+        self.position = position
+        self.velocity = velocity
+        self.radius = radius
+
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Lab 4: Crazy Asteroids")
 
 clock = pygame.time.Clock()
 running = True
 
-asteroid_positions = []
-asteroid_velocities = []
-asteroid_radii = []
+asteroids = []
 
 for i in range(6):
-    position = pygame.math.Vector2(random.randint(0, 800), random.randint(0, 600))
-    velocity = pygame.math.Vector2(random.uniform(-3, 3), random.uniform(-3, 3))
+    position = pygame.Vector2(
+        random.randint(0, 800),
+        random.randint(0, 600)
+    )
+    velocity = pygame.Vector2(
+        random.uniform(-3, 3),
+        random.uniform(-3, 3)
+    )
     radius = random.randint(15, 35)
-    asteroid_positions.append(position)
-    asteroid_velocities.append(velocity)
-    asteroid_radii.append(radius)
 
-def check_collision(i, j):
-    difference = asteroid_positions[j] - asteroid_positions[i]
-    distance = difference.length() # to find distance between two centers
-    if distance < asteroid_radii[i] + asteroid_radii[j]: # calculates a normal when a collision happens
+    asteroids.append(Asteroid(position, velocity, radius))
+
+
+def check_collision(a, b):
+    difference = b.position - a.position
+    distance = difference.length() # distance between two centers
+    if distance < a.radius + b.radius: # calculates a normal when a collision happens
         if distance == 0:
             normal = pygame.math.Vector2(1, 0)
         else:
@@ -39,35 +49,38 @@ while running:
             running = False
 
     screen.fill((0, 0, 0))
-    for i in range(6):
-        asteroid_positions[i] += asteroid_velocities[i]
+    for asteroid in asteroids:
+        asteroid.position += asteroid.velocity
 
         # for screen wrapping if asteroid goes off screen
-        if asteroid_positions[i].x < 0:
-            asteroid_positions[i].x = 800
-        if asteroid_positions[i].x > 800:
-            asteroid_positions[i].x = 0
-        if asteroid_positions[i].y < 0:
-            asteroid_positions[i].y = 600
-        if asteroid_positions[i].y > 600:
-            asteroid_positions[i].y = 0
+        if asteroid.position.x < -asteroid.radius:
+            asteroid.position.x = 800 + asteroid.radius
+        elif asteroid.position.x > 800 + asteroid.radius:
+            asteroid.position.x = -asteroid.radius
 
-        pygame.draw.circle(screen, (180, 180, 180), (int(asteroid_positions[i].x), int(asteroid_positions[i].y)), asteroid_radii[i])
+        if asteroid.position.y < -asteroid.radius:
+            asteroid.position.y = 600 + asteroid.radius
+        elif asteroid.position.y > 600 + asteroid.radius:
+            asteroid.position.y = -asteroid.radius
 
-    for i in range(6):
-        for j in range(i + 1, 6):
-            normal = check_collision(i, j)
+        pygame.draw.circle(screen, (180, 180, 180), (int(asteroid.position.x), int(asteroid.position.y)), asteroid.radius)
+
+    for i in range(len(asteroids)):
+        for j in range(i + 1, len(asteroids)):
+            a = asteroids[i]
+            b = asteroids[j]
+            normal = check_collision(a, b)
             if normal is not None:
-                relative_velocity = asteroid_velocities[j] - asteroid_velocities[i]
+                relative_velocity = b.velocity - a.velocity
                 speed_toward_each_other = relative_velocity.dot(normal)
 
                 if speed_toward_each_other < 0: # negative means moving toward each other
-                    mass_i = asteroid_radii[i] * asteroid_radii[i] # give larger asteroids more mass
-                    mass_j = asteroid_radii[j] * asteroid_radii[j]
+                    mass_i = a.radius * a.radius # give larger asteroids more mass
+                    mass_j = b.radius * b.radius
 
                     impulse = (-2 * speed_toward_each_other) / (1 / mass_i + 1 / mass_j) # calc impulse for collisions
-                    asteroid_velocities[i] -= (impulse / mass_i) * normal
-                    asteroid_velocities[j] += (impulse / mass_j) * normal
+                    a.velocity -= (impulse / mass_i) * normal
+                    b.velocity += (impulse / mass_j) * normal
 
     pygame.display.flip()
     clock.tick(60)
