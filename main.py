@@ -22,7 +22,12 @@ class Ship:
         self.position = position
         self.angle = 90 # starts facing up
         self.rotation_speed = 3
-        self.speed = 4
+        self.velocity = pygame.Vector2(0, 0)
+        self.acceleration = pygame.Vector2(0, 0)
+        self.thrust = 0.15
+        self.drag = 0.99
+        self.max_speed = 7
+        self.is_thrusting = False
 
     def forward_vector(self):
         radians = math.radians(self.angle)
@@ -33,6 +38,7 @@ WIDTH, HEIGHT = 800, 600
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Lab 4: Crazy Asteroids")
+font = pygame.font.Font(None, 30)
 
 clock = pygame.time.Clock()
 running = True
@@ -95,8 +101,20 @@ while running:
 
     forward = ship.forward_vector()
 
+    ship.acceleration = pygame.Vector2(0, 0)
+    ship.is_thrusting = False
+
     if keys[pygame.K_UP]:
-        ship.position += forward * ship.speed
+        ship.acceleration = forward * ship.thrust
+        ship.is_thrusting = True
+
+    ship.velocity += ship.acceleration
+    ship.velocity *= ship.drag
+
+    if ship.velocity.length() > ship.max_speed:
+        ship.velocity.scale_to_length(ship.max_speed)
+
+    ship.position += ship.velocity
 
     # screen wrapping for the ship
     if ship.position.x > WIDTH:
@@ -118,6 +136,11 @@ while running:
     p3 = ship.position + right * 16
 
     pygame.draw.polygon(screen, (255, 255, 255), [p1, p2, p3], 2)
+
+    # engine flame when thrusting
+    if ship.is_thrusting:
+        back = ship.position - forward * 18
+        pygame.draw.circle(screen, (255, 255, 0), (int(back.x), int(back.y)), 5)
 
     for asteroid in asteroids:
         asteroid.position += asteroid.velocity
@@ -178,6 +201,11 @@ while running:
                     impulse = (-2 * speed_toward_each_other) / (1 / mass_i + 1 / mass_j)
                     a.velocity -= (impulse / mass_i) * normal
                     b.velocity += (impulse / mass_j) * normal
+
+    speed_text = font.render(f"Speed: {ship.velocity.length():.2f}", True, (255, 255, 255))
+    velocity_text = font.render(f"Velocity: ({ship.velocity.x:.2f}, {ship.velocity.y:.2f})", True, (255, 255, 255))
+    screen.blit(speed_text, (10, 10))
+    screen.blit(velocity_text, (10, 40))
 
     pygame.display.flip()
     clock.tick(60)
