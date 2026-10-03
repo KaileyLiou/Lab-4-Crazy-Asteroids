@@ -37,6 +37,8 @@ MISSILE_SPEED = 7
 WIDTH, HEIGHT = 800, 600
 DETECTION_RANGE = 300
 FOV_THRESHOLD = 0.7
+ENEMY_FIRE_COOLDOWN = 60
+enemy_fire_timer = 0
 
 GRAY = (120, 120, 120)
 RED = (255, 60, 60)
@@ -136,6 +138,7 @@ while running:
     if ship.position.y < 0:
         ship.position.y = HEIGHT
 
+    enemy_angle += 0.5
     radians = math.radians(enemy_angle)
 
     enemy_forward = pygame.Vector2(math.cos(radians), -math.sin(radians))
@@ -154,6 +157,15 @@ while running:
         detected = False
 
     enemy_state = "ATTACK" if detected else "PATROL"
+
+    if enemy_fire_timer > 0:
+        enemy_fire_timer -= 1
+
+    if detected and enemy_fire_timer == 0:
+        fire_direction = (ship.position - enemy_position).normalize()
+        enemy_missile_velocity = fire_direction * MISSILE_SPEED
+        missiles.append(Missile(pygame.Vector2(enemy_position), enemy_missile_velocity))
+        enemy_fire_timer = ENEMY_FIRE_COOLDOWN
 
     screen.fill((0, 0, 0))
 
@@ -181,7 +193,7 @@ while running:
     enemy_color = RED if detected else WHITE
     pygame.draw.polygon(screen, enemy_color, [e1, e2, e3], 2)
 
-    pygame.draw.circle(screen, GRAY, (int(enemy_position.x), int(enemy_position.y)), DETECTION_RANGE, 1)
+    # pygame.draw.circle(screen, GRAY, (int(enemy_position.x), int(enemy_position.y)), DETECTION_RANGE, 1)
 
     pygame.draw.line(screen, RED, enemy_position, enemy_position + enemy_forward * 100, 3)
 
