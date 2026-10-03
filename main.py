@@ -35,6 +35,12 @@ class Ship:
 
 MISSILE_SPEED = 7
 WIDTH, HEIGHT = 800, 600
+DETECTION_RANGE = 300
+FOV_THRESHOLD = 0.7
+
+GRAY = (120, 120, 120)
+RED = (255, 60, 60)
+WHITE = (255, 255, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Lab 4: Crazy Asteroids")
@@ -72,6 +78,10 @@ def check_collision(a, b):
     return None
 
 ship = Ship(pygame.Vector2(WIDTH/2, HEIGHT/2))
+
+enemy_position = pygame.Vector2(WIDTH / 4, HEIGHT / 2)
+enemy_angle = 0
+enemy_state = "PATROL" # starts out not seeing the player
 
 while running:
     for event in pygame.event.get():
@@ -126,6 +136,25 @@ while running:
     if ship.position.y < 0:
         ship.position.y = HEIGHT
 
+    radians = math.radians(enemy_angle)
+
+    enemy_forward = pygame.Vector2(math.cos(radians), -math.sin(radians))
+
+    to_player = ship.position - enemy_position
+    if to_player.length() > 0:
+        to_player = to_player.normalize()
+
+    distance = enemy_position.distance_to(ship.position)
+
+    dot = enemy_forward.dot(to_player)
+
+    if (distance < DETECTION_RANGE and dot > FOV_THRESHOLD):
+        detected = True
+    else:
+        detected = False
+
+    enemy_state = "ATTACK" if detected else "PATROL"
+
     screen.fill((0, 0, 0))
 
     left = forward.rotate(140)
@@ -141,6 +170,20 @@ while running:
     if ship.is_thrusting:
         back = ship.position - forward * 18
         pygame.draw.circle(screen, (255, 255, 0), (int(back.x), int(back.y)), 5)
+
+    enemy_left = enemy_forward.rotate(140)
+    enemy_right = enemy_forward.rotate(-140)
+
+    e1 = enemy_position + enemy_forward * 22
+    e2 = enemy_position + enemy_left * 16
+    e3 = enemy_position + enemy_right * 16
+
+    enemy_color = RED if detected else WHITE
+    pygame.draw.polygon(screen, enemy_color, [e1, e2, e3], 2)
+
+    pygame.draw.circle(screen, GRAY, (int(enemy_position.x), int(enemy_position.y)), DETECTION_RANGE, 1)
+
+    pygame.draw.line(screen, RED, enemy_position, enemy_position + enemy_forward * 100, 3)
 
     for asteroid in asteroids:
         asteroid.position += asteroid.velocity
@@ -171,8 +214,8 @@ while running:
 
     for missile in missiles[:]:
         for asteroid in asteroids[:]:
-            distance = missile.position.distance_to(asteroid.position)
-            if distance < missile.radius + asteroid.radius:
+            distance_to_asteroid = missile.position.distance_to(asteroid.position)
+            if distance_to_asteroid < missile.radius + asteroid.radius:
                 asteroid.position = pygame.Vector2(
                     random.randint(0, WIDTH),
                     random.randint(0, HEIGHT)
@@ -204,8 +247,14 @@ while running:
 
     speed_text = font.render(f"Speed: {ship.velocity.length():.2f}", True, (255, 255, 255))
     velocity_text = font.render(f"Velocity: ({ship.velocity.x:.2f}, {ship.velocity.y:.2f})", True, (255, 255, 255))
+    state_text = font.render(f"Enemy State: {enemy_state}", True, enemy_color)
+    distance_text = font.render(f"Distance: {distance:.1f}", True, WHITE)
+    dot_text = font.render(f"Dot Product: {dot:.2f}", True, WHITE)
     screen.blit(speed_text, (10, 10))
     screen.blit(velocity_text, (10, 40))
+    screen.blit(state_text, (10, 70))
+    screen.blit(distance_text, (10, 100))
+    screen.blit(dot_text, (10, 130))
 
     pygame.display.flip()
     clock.tick(60)
