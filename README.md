@@ -22,4 +22,5 @@ The player can rotate the spaceship and fire missiles toward the mouse cursor or
 
 Use the left and right arrow keys to rotate the ship, the up arrow to apply thrust, and the space bar to fire a missle.
 
-<img width="1171" height="877" alt="Screenshot 2026-09-24 at 1 23 43 AM" src="https://github.com/user-attachments/assets/1e20ee78-ad40-46d0-9833-ff10fffccc1d" />
+<img width="1175" height="872" alt="Screenshot 2026-10-02 at 11 45 43 PM" src="https://github.com/user-attachments/assets/312c0747-1229-403b-9dea-2763b452821b" />
+<img width="1178" height="877" alt="Screenshot 2026-10-02 at 11 45 32 PM" src="https://github.com/user-attachments/assets/aa44dac8-f065-4fba-99d5-3419e63ba8de" />
